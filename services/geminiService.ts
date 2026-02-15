@@ -3,7 +3,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_KEY;
 const MODEL_ID = "gemini-3-flash-preview"; 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
-console.log("--- [계정 확인 모델: Gemini 3 Flash 시도] ---");
+console.log("--- [계정 맞춤형 모델: Gemini 3 Flash 호출] ---");
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
@@ -24,7 +24,7 @@ export const analyzeFoodImage = async (base64Image: string) => {
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("분석 실패:", error);
+    console.error("비전 에러 상세:", error);
     throw new Error("이미지 분석 실패");
   }
 
@@ -41,7 +41,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `Log: ${currentLogs}\nUser: "${message}"\nJSON: { "action": "ADD", "foodName": "...", "proteinAmount": 0, "responseMessage": "한글답변" }`
+          text: `오늘의 기록: ${currentLogs}\n사용자 메시지: "${message}"\n다음 JSON 형식으로 답해줘: { "action": "ADD", "foodName": "음식명", "proteinAmount": 0, "responseMessage": "한글 답변" }`
         }]
       }],
       generationConfig: { responseMimeType: "application/json" }
@@ -50,7 +50,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("❌ 채팅 실패 상세:", error);
+    console.error("❌ 채팅 에러 상세:", error);
     throw new Error("채팅 실패");
   }
 
