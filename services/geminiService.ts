@@ -7,8 +7,7 @@ console.log("2. 열쇠 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 
 console.log("-----------------------------------------");
 // ------------------------------------------------------
 
-// 404 에러 방지를 위해 가장 안정적인 'latest' 명칭을 사용합니다.
-const AI_MODEL = 'gemini-1.5-flash-latest';
+const AI_MODEL = 'gemini-1.5-flash';
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
