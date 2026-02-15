@@ -7,7 +7,7 @@ console.log("2. 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 0);
 console.log("-----------------------------------------");
 // -----------------------------------------------------------
 
-const AI_MODEL = 'gemini-2.0-flash';
+const AI_MODEL = 'gemini-1.5-flash';
 
 export const analyzeFoodImage = async (base64Image: string) => {
   // 열쇠 이름을 VITE_GEMINI_KEY로 변경했습니다.
