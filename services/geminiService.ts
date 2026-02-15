@@ -29,7 +29,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `History: ${currentLogs}\nUser: "${message}"\nJSON: { "action": "ADD", "foodName": "...", "proteinAmount": 0, "responseMessage": "..." }`
+          text: `History: ${currentLogs}\nUser: "${message}"\nJSON: { \"action\": \"ADD\", \"foodName\": \"...\", \"proteinAmount\": 0, \"responseMessage\": \"...\" }`
         }]
       }],
       generationConfig: { responseMimeType: "application/json" }
