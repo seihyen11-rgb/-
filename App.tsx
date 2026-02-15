@@ -1,3 +1,4 @@
+
 console.log("현재 API 키 상태:", import.meta.env.VITE_API_KEY ? "있음" : "없음");
 import React, { useState, useEffect } from 'react';
 import { ProteinLog, ViewMode, ChatMessage } from './types';
