@@ -1,16 +1,16 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// ---------------- [열쇠 배달 확인 디버깅 코드] ----------------
-console.log("--- [새로운 환경 변수 체크] ---");
-console.log("1. VITE_GEMINI_KEY 배달 완료?:", !!import.meta.env.VITE_GEMINI_KEY);
-console.log("2. 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 0);
+// ---------------- [연결 상태 확인용 로그] ----------------
+console.log("--- [최종 연결 체크] ---");
+console.log("1. 열쇠(VITE_GEMINI_KEY) 존재 여부:", !!import.meta.env.VITE_GEMINI_KEY);
+console.log("2. 열쇠 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 0);
 console.log("-----------------------------------------");
-// -----------------------------------------------------------
+// ------------------------------------------------------
 
-const AI_MODEL = 'gemini-1.5-flash';
+// 404 에러 방지를 위해 가장 안정적인 'latest' 명칭을 사용합니다.
+const AI_MODEL = 'gemini-1.5-flash-latest';
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  // 열쇠 이름을 VITE_GEMINI_KEY로 변경했습니다.
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
   
   const response = await ai.models.generateContent({
@@ -48,7 +48,6 @@ export const analyzeFoodImage = async (base64Image: string) => {
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  // 열쇠 이름을 VITE_GEMINI_KEY로 변경했습니다.
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
   
   const response = await ai.models.generateContent({
