@@ -1,6 +1,15 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-
+// ---------------- 디버깅 코드 시작 ----------------
+console.log("--- [환경 변수 체크] ---");
+// 열쇠가 있는지 없는지만 true/false로 보여줍니다.
+console.log("1. 열쇠가 배달되었나요?:", !!import.meta.env.VITE_API_KEY); 
+// 열쇠의 글자 수를 확인합니다. (0이면 없는 것)
+console.log("2. 열쇠 글자 수:", import.meta.env.VITE_API_KEY?.length || 0);
+// 열쇠의 앞 3글자만 살짝 확인합니다.
+console.log("3. 열쇠 앞부분 확인:", import.meta.env.VITE_API_KEY?.substring(0, 3));
+console.log("------------------------");
+// ------------------------------------------------
 const AI_MODEL = 'gemini-2.0-flash';
 
 export const analyzeFoodImage = async (base64Image: string) => {
