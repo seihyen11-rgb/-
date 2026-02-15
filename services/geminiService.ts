@@ -1,17 +1,14 @@
 // ---------------- [연결 상태 체크] ----------------
 const API_KEY = import.meta.env.VITE_GEMINI_KEY;
-// gemini-pro는 가장 표준적인 모델명입니다.
-const MODEL_ID = "gemini-pro"; 
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+// v1beta가 아닌 v1 주소를 사용합니다.
+const BASE_URL = "https://generativelanguage.googleapis.com/v1"; 
+const MODEL_ID = "gemini-1.5-flash"; // 현재 가장 표준인 모델입니다.
 
-console.log("--- [Gemini Pro 모델로 최종 시도] ---");
+console.log("--- [주소 체계 변경 후 최종 시도] ---");
 // ------------------------------------------------
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  // 주의: gemini-pro는 텍스트 전용일 수 있으므로, 
-  // 이미지 분석 시에는 모델명을 gemini-pro-vision으로 자동 전환합니다.
-  const visionModel = "gemini-pro-vision";
-  const url = `${BASE_URL}/${visionModel}:generateContent?key=${API_KEY}`;
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -28,8 +25,8 @@ export const analyzeFoodImage = async (base64Image: string) => {
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("비전 모델 실패:", error);
-    throw new Error("이미지 분석 실패");
+    console.error("이미지 분석 실패 원인:", error);
+    throw new Error("분석 실패");
   }
 
   const data = await response.json();
@@ -37,7 +34,8 @@ export const analyzeFoodImage = async (base64Image: string) => {
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  const url = `${BASE_URL}/${MODEL_ID}:generateContent?key=${API_KEY}`;
+  // /models/ 를 주소 중간에 명시적으로 넣어 경로 오류를 방지합니다.
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -45,7 +43,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `오늘의 단백질 섭취 기록: ${currentLogs}\n사용자 메시지: "${message}"\n위 내용을 바탕으로 단백질을 추가, 수정, 삭제해줘. 반드시 JSON 형식으로만 답해줘. { "action": "ADD", "foodName": "음식명", "proteinAmount": 숫자, "responseMessage": "친절한 한글 답변" }`
+          text: `오늘의 기록: ${currentLogs}\n메시지: "${message}"\nJSON 형식으로만 답해줘: { "action": "ADD", "foodName": "음식명", "proteinAmount": 0, "responseMessage": "한글답변" }`
         }]
       }]
     })
@@ -53,14 +51,12 @@ export const processChatMessage = async (message: string, currentLogs: string) =
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("❌ Pro 모델 에러:", error);
+    console.error("❌ 구글 응답 상세:", error); // 404가 또 뜨면 이 내용을 꼭 봐야 합니다.
     throw new Error("채팅 실패");
   }
 
   const data = await response.json();
   const text = data.candidates[0].content.parts[0].text;
-  
-  // JSON만 깔끔하게 뽑아내는 처리
   const jsonMatch = text.match(/\{.*\}/s);
   return JSON.parse(jsonMatch ? jsonMatch[0] : text);
 };
