@@ -1,0 +1,7 @@
+{
+  "name": "단백질트래커",
+  "description": "A smart daily protein intake tracker that analyzes food photos and chat messages using AI to keep you on track with your nutritional goals.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
