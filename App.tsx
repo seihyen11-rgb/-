@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ProteinLog, ViewMode, ChatMessage } from './types'; 
-import DailyView from './DailyView'; // 경로 수정: ./components/ 제거
-import WeeklyChart from './WeeklyChart'; // 경로 수정: ./components/ 제거
+import { ProteinLog, ViewMode, ChatMessage } from './types';
+import DailyView from './DailyView'; 
+import WeeklyChart from './WeeklyChart';
 import { 
   ChartBarIcon, 
   ClipboardDocumentListIcon
@@ -58,18 +58,18 @@ const App: React.FC = () => {
           </span>
           Protein AI
         </h1>
-        <div className="flex bg-slate-100 p-1 rounded-xl font-medium text-sm">
+        <div className="flex bg-slate-100 p-1 rounded-xl">
           <button
             onClick={() => setViewMode(ViewMode.DAILY)}
-            className={`px-4 py-2 rounded-lg transition-all ${viewMode === ViewMode.DAILY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.DAILY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            기록
+            <ClipboardDocumentListIcon className="w-6 h-6" />
           </button>
           <button
             onClick={() => setViewMode(ViewMode.WEEKLY)}
-            className={`px-4 py-2 rounded-lg transition-all ${viewMode === ViewMode.WEEKLY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}
+            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.WEEKLY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            통계
+            <ChartBarIcon className="w-6 h-6" />
           </button>
         </div>
       </header>
