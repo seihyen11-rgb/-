@@ -4,7 +4,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 const AI_MODEL = 'gemini-3-flash-preview';
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
   
   const response = await ai.models.generateContent({
     model: AI_MODEL,
