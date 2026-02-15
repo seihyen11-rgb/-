@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-// 3 대신 2.5로 바꿔서 안정성을 높입니다.
-const MODEL_ID = "gemini-2.5-flash";
+
+const AI_MODEL = 'gemini-3-flash-preview';
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
