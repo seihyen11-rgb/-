@@ -2,12 +2,12 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ProteinLog, ChatMessage } from '../types';
 import { analyzeFoodImage, processChatMessage } from '../services/geminiService';
-// Fix: Added ClipboardDocumentListIcon to the imports
 import { 
   PhotoIcon, 
   PaperAirplaneIcon,
   ClockIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  CameraIcon
 } from '@heroicons/react/24/solid';
 
 interface DailyViewProps {
@@ -23,7 +23,8 @@ const DailyView: React.FC<DailyViewProps> = ({ logs, messages, onAddLog, onUpdat
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -68,6 +69,9 @@ const DailyView: React.FC<DailyViewProps> = ({ logs, messages, onAddLog, onUpdat
         onAddMessage({ role: 'ai', text: "이미지 분석에 실패했습니다. 다시 시도해주세요." });
       } finally {
         setIsAnalyzing(false);
+        // Reset input values so the same file can be uploaded again if needed
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
+        if (galleryInputRef.current) galleryInputRef.current.value = '';
       }
     };
     reader.readAsDataURL(file);
@@ -140,7 +144,7 @@ const DailyView: React.FC<DailyViewProps> = ({ logs, messages, onAddLog, onUpdat
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-40">
         {todayMessages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2 opacity-60">
             <ClipboardDocumentListIcon className="w-12 h-12" />
@@ -193,28 +197,45 @@ const DailyView: React.FC<DailyViewProps> = ({ logs, messages, onAddLog, onUpdat
       </div>
 
       {/* Input Footer */}
-      <div className="absolute bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
-        <div className="flex flex-col gap-2">
-          <form onSubmit={handleChatSubmit} className="relative flex gap-2">
-            <button 
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-slate-100 text-slate-600 p-3 rounded-2xl hover:bg-slate-200 transition-colors"
-              disabled={isAnalyzing}
-            >
-              {isAnalyzing ? (
-                <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <PhotoIcon className="w-6 h-6" />
-              )}
-            </button>
+      <div className="absolute bottom-0 left-0 w-full p-4 bg-white border-t border-slate-200 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
+        <div className="flex flex-col gap-3">
+          <form onSubmit={handleChatSubmit} className="flex gap-2">
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="bg-slate-100 text-slate-600 p-3 rounded-2xl hover:bg-slate-200 transition-colors flex items-center justify-center min-w-[52px]"
+                disabled={isAnalyzing}
+                title="카메라로 촬영"
+              >
+                {isAnalyzing ? (
+                  <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CameraIcon className="w-6 h-6" />
+                )}
+              </button>
+              <button 
+                type="button"
+                onClick={() => galleryInputRef.current?.click()}
+                className="bg-slate-100 text-slate-600 p-3 rounded-2xl hover:bg-slate-200 transition-colors flex items-center justify-center min-w-[52px]"
+                disabled={isAnalyzing}
+                title="앨범에서 선택"
+              >
+                {isAnalyzing ? (
+                  <div className="w-6 h-6 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <PhotoIcon className="w-6 h-6" />
+                )}
+              </button>
+            </div>
+            
             <div className="relative flex-1">
               <input 
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="음식 입력 또는 수정 요청..."
-                className="w-full bg-slate-100 border-none rounded-2xl py-3 px-4 pr-12 focus:ring-2 focus:ring-indigo-500 text-sm transition-all"
+                className="w-full bg-slate-100 border-none rounded-2xl py-3 px-4 pr-12 focus:ring-2 focus:ring-indigo-500 text-sm transition-all h-full"
                 disabled={chatLoading}
               />
               <button 
@@ -223,18 +244,26 @@ const DailyView: React.FC<DailyViewProps> = ({ logs, messages, onAddLog, onUpdat
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-indigo-600 p-1 disabled:opacity-30"
               >
                 {chatLoading ? (
-                  <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <PaperAirplaneIcon className="w-6 h-6" />
                 )}
               </button>
             </div>
+            
             <input 
               type="file" 
               accept="image/*" 
               capture="environment"
               hidden 
-              ref={fileInputRef} 
+              ref={cameraInputRef} 
+              onChange={handleImageUpload}
+            />
+            <input 
+              type="file" 
+              accept="image/*" 
+              hidden 
+              ref={galleryInputRef} 
               onChange={handleImageUpload}
             />
           </form>
