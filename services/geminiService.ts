@@ -1,14 +1,13 @@
-// ---------------- [연결 상태 체크] ----------------
 const API_KEY = import.meta.env.VITE_GEMINI_KEY;
-// v1beta가 아닌 v1 주소를 사용합니다.
-const BASE_URL = "https://generativelanguage.googleapis.com/v1"; 
-const MODEL_ID = "gemini-1.5-flash"; // 현재 가장 표준인 모델입니다.
+// 인도 지역에서 가장 가용성이 높은 v1beta 엔드포인트와 모델 경로입니다.
+const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
+const MODEL_PATH = "models/gemini-1.5-flash";
 
-console.log("--- [주소 체계 변경 후 최종 시도] ---");
-// ------------------------------------------------
+console.log("--- [인도 지역 계정 최적화 주소 시도] ---");
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
+  // 주소 형식을 v1beta/models/model-id:generateContent로 엄격히 맞춤
+  const url = `${BASE_URL}/${MODEL_PATH}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -16,7 +15,7 @@ export const analyzeFoodImage = async (base64Image: string) => {
     body: JSON.stringify({
       contents: [{
         parts: [
-          { text: "Estimate protein in grams for this food. Respond in JSON: { \"foodName\": \"...\", \"proteinAmount\": 0 }" },
+          { text: "Estimate protein. Respond in JSON: { \"foodName\": \"...\", \"proteinAmount\": 0 }" },
           { inlineData: { mimeType: "image/jpeg", data: base64Image } }
         ]
       }]
@@ -25,7 +24,7 @@ export const analyzeFoodImage = async (base64Image: string) => {
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("이미지 분석 실패 원인:", error);
+    console.error("인도 계정 분석 에러:", error);
     throw new Error("분석 실패");
   }
 
@@ -34,8 +33,7 @@ export const analyzeFoodImage = async (base64Image: string) => {
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  // /models/ 를 주소 중간에 명시적으로 넣어 경로 오류를 방지합니다.
-  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
+  const url = `${BASE_URL}/${MODEL_PATH}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -43,7 +41,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `오늘의 기록: ${currentLogs}\n메시지: "${message}"\nJSON 형식으로만 답해줘: { "action": "ADD", "foodName": "음식명", "proteinAmount": 0, "responseMessage": "한글답변" }`
+          text: `Log: ${currentLogs}\nUser: "${message}"\nJSON only: { "action": "ADD", "foodName": "...", "proteinAmount": 0, "responseMessage": "..." }`
         }]
       }]
     })
@@ -51,7 +49,7 @@ export const processChatMessage = async (message: string, currentLogs: string) =
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("❌ 구글 응답 상세:", error); // 404가 또 뜨면 이 내용을 꼭 봐야 합니다.
+    console.error("❌ 인도 계정 채팅 에러:", error);
     throw new Error("채팅 실패");
   }
 
