@@ -7,7 +7,12 @@ console.log("2. 열쇠 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 
 console.log("-----------------------------------------");
 // ------------------------------------------------------
 
-const AI_MODEL = 'gemini-1.5-flash';
+// services/geminiService.ts
+
+// 404가 안 떴던 유일한 이름으로 다시 바꿉니다.
+const AI_MODEL = 'gemini-2.0-flash'; 
+
+// ... 나머지 코드는 그대로 유지;
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
