@@ -29,7 +29,7 @@ function App() {
         const result = await analyzeFoodImage(base64Data);
         addLog(result.foodName, result.proteinAmount);
       } catch (err) {
-        alert("분석 실패");
+        alert("이미지 분석 실패");
       } finally {
         setLoading(false);
       }
@@ -65,9 +65,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center">
+      {/* 상단 헤더 */}
       <header className="w-full max-w-md bg-white p-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-2 rounded-xl text-white">📋</div>
+          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-sm">📋</div>
           <h1 className="text-xl font-extrabold text-gray-800">Protein AI</h1>
         </div>
         <div className="flex bg-gray-100 p-1 rounded-xl">
@@ -76,6 +77,7 @@ function App() {
         </div>
       </header>
 
+      {/* 대시보드 */}
       <main className="w-full max-w-md p-4 flex-1 overflow-y-auto pb-32">
         <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
           <p className="text-sm opacity-80 mb-1">오늘 총량</p>
@@ -89,6 +91,7 @@ function App() {
           </div>
         </div>
 
+        {/* 로그 리스트 */}
         {logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-30">
             <div className="text-6xl mb-4">📋</div>
@@ -97,7 +100,7 @@ function App() {
         ) : (
           <div className="space-y-4">
             {logs.map((log) => (
-              <div key={log.id} className="flex flex-col items-end">
+              <div key={log.id} className="flex flex-col items-end animate-in fade-in slide-in-from-right-4">
                 <div className="bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-lg text-sm font-medium">
                   {log.name} {log.protein}g
                 </div>
@@ -106,24 +109,26 @@ function App() {
             ))}
           </div>
         )}
+        {loading && <div className="text-center text-xs text-gray-400 mt-4 animate-pulse">AI 분석 중...</div>}
       </main>
 
+      {/* 하단 입력창 (디자인 완성) */}
       <footer className="fixed bottom-0 w-full max-w-md bg-white p-4 border-t flex flex-col gap-3">
         <div className="flex gap-2 items-center">
           <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleImageUpload} className="hidden" />
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
           
-          <button onClick={() => cameraInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl">📷</button>
-          <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl">🖼️</button>
+          <button onClick={() => cameraInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">📷</button>
+          <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">🖼️</button>
           
           <div className="flex-1 bg-gray-100 rounded-2xl flex items-center px-4 py-1">
             <input 
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleChat()}
-              placeholder="음식 입력..."
-              className="flex-1 bg-transparent py-3 outline-none text-sm"
+onKeyPress={(e) => e.key === 'Enter' && handleChat()}
+              placeholder="음식 입력 또는 수정 요청..."
+              className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-700"
             />
             <button onClick={handleChat} disabled={loading} className="ml-2 text-indigo-600 disabled:opacity-30">
               <svg className="w-6 h-6 rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
@@ -135,4 +140,4 @@ function App() {
   );
 }
 
-export default App;}
+export default App;
