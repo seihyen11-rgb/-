@@ -47,7 +47,7 @@ const App: React.FC = () => {
   if (isInitializing) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto shadow-xl ring-1 ring-slate-200">
+    <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto shadow-xl ring-1 ring-slate-200 font-sans">
       <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
         <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <span className="bg-indigo-600 text-white p-1 rounded-lg">
