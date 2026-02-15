@@ -1,13 +1,12 @@
 const API_KEY = import.meta.env.VITE_GEMINI_KEY;
-// 인도 지역에서 가장 가용성이 높은 v1beta 엔드포인트와 모델 경로입니다.
+// 리스트에서 확인된 가장 최신 모델 ID입니다.
+const MODEL_ID = "gemini-3-flash-preview"; 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
-const MODEL_PATH = "models/gemini-1.5-flash";
 
-console.log("--- [인도 지역 계정 최적화 주소 시도] ---");
+console.log("--- [계정 확인 모델: Gemini 3 Flash 시도] ---");
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  // 주소 형식을 v1beta/models/model-id:generateContent로 엄격히 맞춤
-  const url = `${BASE_URL}/${MODEL_PATH}:generateContent?key=${API_KEY}`;
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -15,17 +14,18 @@ export const analyzeFoodImage = async (base64Image: string) => {
     body: JSON.stringify({
       contents: [{
         parts: [
-          { text: "Estimate protein. Respond in JSON: { \"foodName\": \"...\", \"proteinAmount\": 0 }" },
+          { text: "Estimate protein in grams for this food. Respond in JSON: { \"foodName\": \"...\", \"proteinAmount\": 0 }" },
           { inlineData: { mimeType: "image/jpeg", data: base64Image } }
         ]
-      }]
+      }],
+      generationConfig: { responseMimeType: "application/json" }
     })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("인도 계정 분석 에러:", error);
-    throw new Error("분석 실패");
+    console.error("분석 실패:", error);
+    throw new Error("이미지 분석 실패");
   }
 
   const data = await response.json();
@@ -33,7 +33,7 @@ export const analyzeFoodImage = async (base64Image: string) => {
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  const url = `${BASE_URL}/${MODEL_PATH}:generateContent?key=${API_KEY}`;
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
   const response = await fetch(url, {
     method: "POST",
@@ -41,20 +41,20 @@ export const processChatMessage = async (message: string, currentLogs: string) =
     body: JSON.stringify({
       contents: [{
         parts: [{
-          text: `Log: ${currentLogs}\nUser: "${message}"\nJSON only: { "action": "ADD", "foodName": "...", "proteinAmount": 0, "responseMessage": "..." }`
+          text: `Log: ${currentLogs}\nUser: "${message}"\nJSON: { "action": "ADD", "foodName": "...", "proteinAmount": 0, "responseMessage": "한글답변" }`
         }]
-      }]
+      }],
+      generationConfig: { responseMimeType: "application/json" }
     })
   });
 
   if (!response.ok) {
     const error = await response.json();
-    console.error("❌ 인도 계정 채팅 에러:", error);
+    console.error("❌ 채팅 실패 상세:", error);
     throw new Error("채팅 실패");
   }
 
   const data = await response.json();
   const text = data.candidates[0].content.parts[0].text;
-  const jsonMatch = text.match(/\{.*\}/s);
-  return JSON.parse(jsonMatch ? jsonMatch[0] : text);
+  return JSON.parse(text);
 };
