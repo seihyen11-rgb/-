@@ -117,8 +117,7 @@ function App() {
         <div className="flex gap-2 items-center">
           <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleImageUpload} className="hidden" />
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
-          
-          <button onClick={() => cameraInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">📷</button>
+<button onClick={() => cameraInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">📷</button>
           <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">🖼️</button>
           
           <div className="flex-1 bg-gray-100 rounded-2xl flex items-center px-4 py-1">
@@ -126,7 +125,7 @@ function App() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-onKeyPress={(e) => e.key === 'Enter' && handleChat()}
+              onKeyPress={(e) => e.key === 'Enter' && handleChat()}
               placeholder="음식 입력 또는 수정 요청..."
               className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-700"
             />
