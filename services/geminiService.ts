@@ -1,50 +1,40 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ---------------- [디버깅 로그: 배달 확인용] ----------------
-console.log("--- [Gemini 1.5 연결 시도] ---");
-console.log("열쇠 확인:", !!import.meta.env.VITE_GEMINI_KEY ? "✅ 준비됨" : "❌ 없음");
-// --------------------------------------------------------
+// ---------------- [디버깅 로그] ----------------
+console.log("--- [Gemini 1.5 연결 재시도] ---");
+const API_KEY = import.meta.env.VITE_GEMINI_KEY;
+console.log("열쇠 확인:", !!API_KEY ? "✅ 준비됨" : "❌ 없음");
+// ----------------------------------------------
 
-// 가장 표준적이고 오류가 적은 모델명입니다.
+// 공식 라이브러리 클래스 생성
+const genAI = new GoogleGenerativeAI(API_KEY);
+
 const AI_MODEL = "gemini-1.5-flash";
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
-  
-  // v1beta 대신 기본 생성 방식을 사용하여 호환성을 높입니다.
-  const model = ai.getGenerativeModel({ 
-    model: AI_MODEL,
-    generationConfig: {
-      responseMimeType: "application/json",
-    }
-  });
+  // .getGenerativeModel이 아닌 최신 방식으로 모델을 가져옵니다.
+  const model = genAI.getGenerativeModel({ model: AI_MODEL });
 
   const prompt = "Analyze this food image. Estimate the protein content in grams. " +
                  "Provide a short food name and the protein amount. " +
                  "Do NOT include calories. Respond in JSON format.";
 
   const result = await model.generateContent([
-    prompt,
     {
       inlineData: {
         mimeType: "image/jpeg",
         data: base64Image,
       },
     },
+    { text: prompt },
   ]);
 
-  return JSON.parse(result.response.text());
+  const response = await result.response;
+  return JSON.parse(response.text());
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
-  
-  const model = ai.getGenerativeModel({ 
-    model: AI_MODEL,
-    generationConfig: {
-      responseMimeType: "application/json",
-    }
-  });
+  const model = genAI.getGenerativeModel({ model: AI_MODEL });
 
   const prompt = `
     The user wants to record or correct a protein entry. 
@@ -62,5 +52,6 @@ export const processChatMessage = async (message: string, currentLogs: string) =
   `;
 
   const result = await model.generateContent(prompt);
-  return JSON.parse(result.response.text());
+  const response = await result.response;
+  return JSON.parse(response.text());
 };
