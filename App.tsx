@@ -1,65 +1,136 @@
-import React, { useState } from 'react';
-import { processChatMessage } from './services/geminiService';
+import React, { useState, useRef } from 'react';
+import { processChatMessage, analyzeFoodImage } from './services/geminiService';
+
+interface Log {
+  id: number;
+  name: string;
+  protein: number;
+  time: string;
+}
 
 function App() {
   const [input, setInput] = useState('');
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSend = async () => {
+  const totalProtein = logs.reduce((sum, log) => sum + log.protein, 0);
+
+  // 이미지 처리 공통 함수
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Data = (reader.result as string).split(',')[1];
+      try {
+        const result = await analyzeFoodImage(base64Data);
+        addLog(result.foodName, result.proteinAmount);
+      } catch (err) {
+        alert("이미지 분석에 실패했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const addLog = (name: string, protein: number) => {
+    const newLog = {
+      id: Date.now(),
+      name,
+      protein,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setLogs(prev => [...prev, newLog]);
+  };
+
+  const handleChat = async () => {
     if (!input.trim()) return;
     setLoading(true);
     try {
-      const historyStr = JSON.stringify(logs);
-      const result = await processChatMessage(input, historyStr);
-      
-      // AI 답변에 따라 로그 업데이트
+      const result = await processChatMessage(input, JSON.stringify(logs));
       if (result.action === 'ADD') {
-        setLogs([...logs, { id: Date.now(), name: result.foodName, protein: result.proteinAmount }]);
+        addLog(result.foodName, result.proteinAmount);
       }
-      alert(result.responseMessage);
       setInput('');
     } catch (err) {
-      alert("에러가 발생했습니다. 콘솔을 확인하세요.");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const totalProtein = logs.reduce((sum, item) => sum + item.protein, 0);
-
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Protein AI Tracker</h1>
-      <div className="bg-indigo-600 text-white p-6 rounded-2xl mb-4">
-        <p>오늘 총량</p>
-        <h2 className="text-4xl font-bold">{totalProtein} g</h2>
-      </div>
-      <div className="space-y-2 mb-4">
-        {logs.map(log => (
-          <div key={log.id} className="p-3 bg-white shadow rounded-lg flex justify-between">
-            <span>{log.name}</span>
-            <span className="font-bold">{log.protein}g</span>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input 
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          className="flex-1 border p-2 rounded"
-          placeholder="계란 2개 먹었어"
-        />
-        <button 
-          onClick={handleSend}
-          disabled={loading}
-          className="bg-indigo-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
-        >
-          {loading ? "..." : "전송"}
-        </button>
-      </div>
-    </div>
-  );
-}
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center font-sans">
+      {/* 상단 헤더 */}
+      <header className="w-full max-w-md bg-white p-4 flex justify-between items-center border-b">
+        <div className="flex items-center gap-2">
+          <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-sm">📋</div>
+          <h1 className="text-xl font-extrabold text-gray-800">Protein AI</h1>
+        </div>
+        <div className="flex bg-gray-100 p-1 rounded-xl">
+          <button className="p-2 bg-white rounded-lg shadow-sm">📄</button>
+          <button className="p-2 text-gray-400">📊</button>
+        </div>
+      </header>
 
-export default App;
+      {/* 대시보드 */}
+      <main className="w-full max-w-md p-4 flex-1 overflow-y-auto pb-32">
+        <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-xl mb-6 relative overflow-hidden">
+          <p className="text-sm opacity-80 mb-1">오늘 총량</p>
+          <div className="flex items-baseline gap-1">
+            <h2 className="text-5xl font-black">{totalProtein}</h2>
+            <span className="text-xl font-medium">g</span>
+          </div>
+          <div className="absolute top-6 right-6 text-right">
+            <p className="text-xs opacity-70">2월 16일</p>
+            <p className="text-[10px] font-bold tracking-widest mt-1">● LIVE TRACKER</p>
+          </div>
+        </div>
+
+        {/* 빈 기록 화면 또는 로그 리스트 */}
+        {logs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 opacity-30">
+            <div className="text-6xl mb-4">📋</div>
+            <p className="text-sm">오늘의 식사를 기록해보세요!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {logs.map((log) => (
+              <div key={log.id} className="flex flex-col items-end animate-in fade-in slide-in-from-right-4">
+                <div className="bg-indigo-600 text-white px-5 py-3 rounded-2xl rounded-tr-none shadow-lg text-sm font-medium">
+                  {log.name} {log.protein}g
+                </div>
+                <span className="text-[10px] text-gray-400 mt-1 mr-1">{log.time}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {loading && <div className="text-center text-xs text-gray-400 mt-4 animate-pulse">AI 분석 중...</div>}
+      </main>
+
+      {/* 하단 푸터 (카메라/갤러리/입력창) */}
+      <footer className="fixed bottom-0 w-full max-w-md bg-white p-4 border-t flex flex-col gap-3">
+        <div className="flex gap-2 items-center">
+          {/* 숨겨진 파일 입력들 */}
+          <input type="file" accept="image/*" capture="environment" ref={cameraInputRef} onChange={handleImageUpload} className="hidden" />
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} className="hidden" />
+          
+          <button onClick={() => cameraInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">📷</button>
+          <button onClick={() => fileInputRef.current?.click()} className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-xl hover:bg-gray-200 transition-colors">🖼️</button>
+          
+          <div className="flex-1 bg-gray-100 rounded-2xl flex items-center px-4 py-1">
+            <input 
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleChat()}
+              placeholder="음식 입력 또는 수정 요청..."
+              className="flex-1 bg-transparent py-3 outline-none text-sm text-gray-700"
+            />
+            <button onClick={handleChat} disabled={loading} className="ml-2 text-indigo-600 disabled:opacity-30">
+              <svg className="w-6 h-6 rotate-90" fill="currentColor" viewBox="0 0 20 20"><path d
