@@ -1,7 +1,7 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const AI_MODEL = 'gemini-3-flash-preview';
+const AI_MODEL = 'gemini-1.5-flash';
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_API_KEY });
