@@ -1,6 +1,6 @@
 const API_KEY = import.meta.env.VITE_GEMINI_KEY;
-// 리스트에서 확인된 가장 최신 모델 ID입니다.
-const MODEL_ID = "gemini-3-flash-preview"; 
+// 3 대신 2.5로 바꿔서 안정성을 높입니다.
+const MODEL_ID = "gemini-2.5-flash";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 console.log("--- [계정 맞춤형 모델: Gemini 3 Flash 호출] ---");
