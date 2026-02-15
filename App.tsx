@@ -1,106 +1,65 @@
+import React, { useState } from 'react';
+import { processChatMessage } from './services/geminiService';
 
-import React, { useState, useEffect } from 'react';
-import { ProteinLog, ViewMode, ChatMessage } from './types';
-import DailyView from './components/DailyView';
-import WeeklyChart from './components/WeeklyChart';
-import { 
-  ChartBarIcon, 
-  ClipboardDocumentListIcon
-} from '@heroicons/react/24/outline';
+function App() {
+  const [input, setInput] = useState('');
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-const App: React.FC = () => {
-  const [logs, setLogs] = useState<ProteinLog[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.DAILY);
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  // Load from localStorage
-  useEffect(() => {
-    const savedLogs = localStorage.getItem('protein_logs');
-    const savedMessages = localStorage.getItem('protein_messages');
-    if (savedLogs) setLogs(JSON.parse(savedLogs));
-    if (savedMessages) setMessages(JSON.parse(savedMessages));
-    setIsInitializing(false);
-  }, []);
-
-  // Save to localStorage
-  useEffect(() => {
-    if (!isInitializing) {
-      localStorage.setItem('protein_logs', JSON.stringify(logs));
-      localStorage.setItem('protein_messages', JSON.stringify(messages));
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    setLoading(true);
+    try {
+      const historyStr = JSON.stringify(logs);
+      const result = await processChatMessage(input, historyStr);
+      
+      // AI 답변에 따라 로그 업데이트
+      if (result.action === 'ADD') {
+        setLogs([...logs, { id: Date.now(), name: result.foodName, protein: result.proteinAmount }]);
+      }
+      alert(result.responseMessage);
+      setInput('');
+    } catch (err) {
+      alert("에러가 발생했습니다. 콘솔을 확인하세요.");
+    } finally {
+      setLoading(false);
     }
-  }, [logs, messages, isInitializing]);
-
-  const addLog = (newLog: Omit<ProteinLog, 'id'>): string => {
-    const id = crypto.randomUUID();
-    const logWithId: ProteinLog = { ...newLog, id };
-    setLogs(prev => [...prev, logWithId]);
-    return id;
   };
 
-  const updateLog = (id: string, updates: Partial<ProteinLog>) => {
-    setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log));
-  };
-
-  const deleteLog = (id: string) => {
-    setLogs(prev => prev.filter(log => log.id !== id));
-    setMessages(prev => prev.filter(msg => msg.logId !== id));
-  };
-
-  const addMessage = (msg: Omit<ChatMessage, 'id' | 'timestamp'>) => {
-    const newMessage: ChatMessage = {
-      ...msg,
-      id: crypto.randomUUID(),
-      timestamp: Date.now()
-    };
-    setMessages(prev => [...prev, newMessage]);
-  };
-
-  if (isInitializing) return null;
+  const totalProtein = logs.reduce((sum, item) => sum + item.protein, 0);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col max-w-md mx-auto shadow-xl ring-1 ring-slate-200">
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm">
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <span className="bg-indigo-600 text-white p-1 rounded-lg">
-            <ClipboardDocumentListIcon className="w-5 h-5" />
-          </span>
-          Protein AI
-        </h1>
-        <div className="flex bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setViewMode(ViewMode.DAILY)}
-            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.DAILY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <ClipboardDocumentListIcon className="w-6 h-6" />
-          </button>
-          <button
-            onClick={() => setViewMode(ViewMode.WEEKLY)}
-            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.WEEKLY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <ChartBarIcon className="w-6 h-6" />
-          </button>
-        </div>
-      </header>
-
-      <main className="flex-1 overflow-hidden relative flex flex-col">
-        {viewMode === ViewMode.DAILY ? (
-          <DailyView 
-            logs={logs} 
-            messages={messages}
-            onAddLog={addLog} 
-            onUpdateLog={updateLog}
-            onDeleteLog={deleteLog}
-            onAddMessage={addMessage}
-          />
-        ) : (
-          <div className="overflow-y-auto h-full">
-            <WeeklyChart logs={logs} />
+    <div className="p-4 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Protein AI Tracker</h1>
+      <div className="bg-indigo-600 text-white p-6 rounded-2xl mb-4">
+        <p>오늘 총량</p>
+        <h2 className="text-4xl font-bold">{totalProtein} g</h2>
+      </div>
+      <div className="space-y-2 mb-4">
+        {logs.map(log => (
+          <div key={log.id} className="p-3 bg-white shadow rounded-lg flex justify-between">
+            <span>{log.name}</span>
+            <span className="font-bold">{log.protein}g</span>
           </div>
-        )}
-      </main>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input 
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="flex-1 border p-2 rounded"
+          placeholder="계란 2개 먹었어"
+        />
+        <button 
+          onClick={handleSend}
+          disabled={loading}
+          className="bg-indigo-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
+        >
+          {loading ? "..." : "전송"}
+        </button>
+      </div>
     </div>
   );
-};
+}
 
 export default App;
