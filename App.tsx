@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ProteinLog, ViewMode, ChatMessage } from './types';
-import DailyView from './DailyView'; 
-import WeeklyChart from './WeeklyChart';
-import { 
-  ChartBarIcon, 
-  ClipboardDocumentListIcon
-} from '@heroicons/react/24/outline';
+import { ProteinLog, ViewMode, ChatMessage } from './types'; 
+import DailyView from './DailyView'; // 경로 수정
+import WeeklyChart from './WeeklyChart'; // 경로 수정
+import { ChartBarIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 const App: React.FC = () => {
   const [logs, setLogs] = useState<ProteinLog[]>([]);
@@ -59,32 +56,15 @@ const App: React.FC = () => {
           Protein AI
         </h1>
         <div className="flex bg-slate-100 p-1 rounded-xl">
-          <button
-            onClick={() => setViewMode(ViewMode.DAILY)}
-            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.DAILY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <ClipboardDocumentListIcon className="w-6 h-6" />
-          </button>
-          <button
-            onClick={() => setViewMode(ViewMode.WEEKLY)}
-            className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.WEEKLY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            <ChartBarIcon className="w-6 h-6" />
-          </button>
+          <button onClick={() => setViewMode(ViewMode.DAILY)} className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.DAILY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}><ClipboardDocumentListIcon className="w-6 h-6" /></button>
+          <button onClick={() => setViewMode(ViewMode.WEEKLY)} className={`p-2 rounded-lg transition-all ${viewMode === ViewMode.WEEKLY ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}><ChartBarIcon className="w-6 h-6" /></button>
         </div>
       </header>
-
       <main className="flex-1 overflow-hidden relative flex flex-col">
         {viewMode === ViewMode.DAILY ? (
-          <DailyView 
-            logs={logs} messages={messages}
-            onAddLog={addLog} onUpdateLog={updateLog}
-            onDeleteLog={deleteLog} onAddMessage={addMessage}
-          />
+          <DailyView logs={logs} messages={messages} onAddLog={addLog} onUpdateLog={updateLog} onDeleteLog={deleteLog} onAddMessage={addMessage} />
         ) : (
-          <div className="overflow-y-auto h-full">
-            <WeeklyChart logs={logs} />
-          </div>
+          <div className="overflow-y-auto h-full"><WeeklyChart logs={logs} /></div>
         )}
       </main>
     </div>
