@@ -1,79 +1,58 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
-
-const AI_MODEL = 'gemini-3-flash-preview';
+const API_KEY = import.meta.env.VITE_GEMINI_KEY;
+// 사용자님 계정에서 확인된 가장 안정적인 최신 모델입니다.
+const MODEL_ID = "gemini-2.5-flash"; 
+const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 export const analyzeFoodImage = async (base64Image: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
-  const response = await ai.models.generateContent({
-    model: AI_MODEL,
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: base64Image,
-          },
-        },
-        {
-          text: "Analyze this food image. Estimate the protein content in grams. " +
-                "Provide a short food name and the protein amount. " +
-                "Do NOT include calories or any other nutritional information. " +
-                "Respond in JSON format."
-        }
-      ]
-    },
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          foodName: { type: Type.STRING },
-          proteinAmount: { type: Type.NUMBER, description: "Protein in grams" }
-        },
-        required: ["foodName", "proteinAmount"]
-      }
-    }
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: "Analyze this food image. Estimate protein in grams. Respond in JSON: { \"foodName\": \"...\", \"proteinAmount\": 0 }" },
+          { inlineData: { mimeType: "image/jpeg", data: base64Image } }
+        ]
+      }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
   });
 
-  return JSON.parse(response.text);
+  if (!response.ok) {
+    const error = await response.json();
+    console.error("비전 분석 실패:", error);
+    throw new Error("이미지 분석 실패");
+  }
+
+  const data = await response.json();
+  return JSON.parse(data.candidates[0].content.parts[0].text);
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const url = `${BASE_URL}/models/${MODEL_ID}:generateContent?key=${API_KEY}`;
   
-  const response = await ai.models.generateContent({
-    model: AI_MODEL,
-    contents: `The user wants to record or correct a protein entry. 
-    Current history of today's logs: ${currentLogs}.
-    User message: "${message}".
-    
-    If the user is correcting a previous entry (e.g., "Change the chicken protein to 30g"), find the relevant item.
-    If the user is adding a new one (e.g., "I ate two eggs"), estimate the protein.
-    Estimate based on standard portions. Do NOT mention calories.
-    
-    Return a JSON object with:
-    1. action: "ADD" or "UPDATE" or "DELETE"
-    2. targetId: (if update/delete)
-    3. foodName: (updated or new name)
-    4. proteinAmount: (updated or new value)
-    5. responseMessage: (A friendly confirmation message in Korean)`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          action: { type: Type.STRING },
-          targetId: { type: Type.STRING },
-          foodName: { type: Type.STRING },
-          proteinAmount: { type: Type.NUMBER },
-          responseMessage: { type: Type.STRING }
-        },
-        required: ["action", "foodName", "proteinAmount", "responseMessage"]
-      }
-    }
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: `Current History: ${currentLogs}\nUser: "${message}"\nRespond in JSON format: { "action": "ADD" | "UPDATE" | "DELETE", "targetId": string | null, "foodName": string, "proteinAmount": number, "responseMessage": "한국어로 된 친절한 답변" }`
+        }]
+      }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
   });
 
-  return JSON.parse(response.text);
+  if (!response.ok) {
+    const error = await response.json();
+    console.error("채팅 에러:", error);
+    throw new Error("채팅 실패");
+  }
+
+  const data = await response.json();
+  const text = data.candidates[0].content.parts[0].text;
+  return JSON.parse(text);
 };
