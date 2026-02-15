@@ -1,90 +1,66 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-// ---------------- [연결 상태 확인용 로그] ----------------
-console.log("--- [최종 연결 체크] ---");
-console.log("1. 열쇠(VITE_GEMINI_KEY) 존재 여부:", !!import.meta.env.VITE_GEMINI_KEY);
-console.log("2. 열쇠 글자 수:", import.meta.env.VITE_GEMINI_KEY?.length || 0);
-console.log("-----------------------------------------");
-// ------------------------------------------------------
+// ---------------- [디버깅 로그: 배달 확인용] ----------------
+console.log("--- [Gemini 1.5 연결 시도] ---");
+console.log("열쇠 확인:", !!import.meta.env.VITE_GEMINI_KEY ? "✅ 준비됨" : "❌ 없음");
+// --------------------------------------------------------
 
-// services/geminiService.ts
-
-// 404가 안 떴던 유일한 이름으로 다시 바꿉니다.
-const AI_MODEL = 'gemini-2.0-flash'; 
-
-// ... 나머지 코드는 그대로 유지;
+// 가장 표준적이고 오류가 적은 모델명입니다.
+const AI_MODEL = "gemini-1.5-flash";
 
 export const analyzeFoodImage = async (base64Image: string) => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
   
-  const response = await ai.models.generateContent({
+  // v1beta 대신 기본 생성 방식을 사용하여 호환성을 높입니다.
+  const model = ai.getGenerativeModel({ 
     model: AI_MODEL,
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            mimeType: 'image/jpeg',
-            data: base64Image,
-          },
-        },
-        {
-          text: "Analyze this food image. Estimate the protein content in grams. " +
-                "Provide a short food name and the protein amount. " +
-                "Do NOT include calories or any other nutritional information. " +
-                "Respond in JSON format."
-        }
-      ]
-    },
-    config: {
+    generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          foodName: { type: Type.STRING },
-          proteinAmount: { type: Type.NUMBER, description: "Protein in grams" }
-        },
-        required: ["foodName", "proteinAmount"]
-      }
     }
   });
 
-  return JSON.parse(response.text);
+  const prompt = "Analyze this food image. Estimate the protein content in grams. " +
+                 "Provide a short food name and the protein amount. " +
+                 "Do NOT include calories. Respond in JSON format.";
+
+  const result = await model.generateContent([
+    prompt,
+    {
+      inlineData: {
+        mimeType: "image/jpeg",
+        data: base64Image,
+      },
+    },
+  ]);
+
+  return JSON.parse(result.response.text());
 };
 
 export const processChatMessage = async (message: string, currentLogs: string) => {
   const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_KEY });
   
-  const response = await ai.models.generateContent({
+  const model = ai.getGenerativeModel({ 
     model: AI_MODEL,
-    contents: `The user wants to record or correct a protein entry. 
-    Current history of today's logs: ${currentLogs}.
-    User message: "${message}".
-    
-    If the user is correcting a previous entry (e.g., "Change the chicken protein to 30g"), find the relevant item.
-    If the user is adding a new one (e.g., "I ate two eggs"), estimate the protein.
-    Estimate based on standard portions. Do NOT mention calories.
-    
-    Return a JSON object with:
-    1. action: "ADD" or "UPDATE" or "DELETE"
-    2. targetId: (if update/delete)
-    3. foodName: (updated or new name)
-    4. proteinAmount: (updated or new value)
-    5. responseMessage: (A friendly confirmation message in Korean)`,
-    config: {
+    generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          action: { type: Type.STRING },
-          targetId: { type: Type.STRING },
-          foodName: { type: Type.STRING },
-          proteinAmount: { type: Type.NUMBER },
-          responseMessage: { type: Type.STRING }
-        },
-        required: ["action", "foodName", "proteinAmount", "responseMessage"]
-      }
     }
   });
 
-  return JSON.parse(response.text);
+  const prompt = `
+    The user wants to record or correct a protein entry. 
+    Current history: ${currentLogs}.
+    User message: "${message}".
+    
+    Return a JSON object:
+    {
+      "action": "ADD" | "UPDATE" | "DELETE",
+      "targetId": string | null,
+      "foodName": string,
+      "proteinAmount": number,
+      "responseMessage": "한국어로 된 친절한 확인 메시지"
+    }
+  `;
+
+  const result = await model.generateContent(prompt);
+  return JSON.parse(result.response.text());
 };
