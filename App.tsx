@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 // 💡 주의: geminiService.ts 파일도 루트(App.tsx 바로 옆)에 있어야 합니다.
-import { processChatMessage, analyzeFoodImage } from './geminiService';
+import { processChatMessage, analyzeFoodImage } from './services/geminiService';
 
 // 타입 정의 (파일 분리 대신 상단에 배치)
 interface ProteinLog {
